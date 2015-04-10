@@ -1,4 +1,6 @@
 
+
+
 #include <iostream>
 #include <vector>
 #include <sstream> //this is where istringstream is defined
@@ -31,11 +33,178 @@ struct Formule{
    }
 };
 
+struct Hypmat{
+    unsigned int bit[512];
+    bool open[512];
+    unsigned int fsp=0;
+   
+    void reset(int nb){
+        for(int i=0;i<512;i++){
+            bit[i]=0;
+            open[i]=true;
+        }
+        fsp=nb;
+    }
+    
+    bool r(int i){
+        return open[i];
+    }
+    
+    int v(int i){
+        return bit[i];
+    }
+    
+    void set(int i,unsigned int x){
+        open[i]=true;
+        bit[i]=x;
+    }
+    
+    int closeSingleAndWithOne(Formule f){
+        int det=1;
+        
+        if(det == 1){
+            int res=0;
+            for(int i=0;i<f.fsp;i++){
+                if(r(f.formuleL[i]) ||r(f.formuleR[i]) ) {
+                    res=i;
+                    break;
+                }
+            }            
+            
+            int fl=f.formuleL[res];
+            int fr=f.formuleR[res];
+            open[fl]=false;
+            open[fr]=false;
+            bit[fl]=1;
+            bit[fr]=1;
+         
+            return 2;
+        }
+    }
+    
+    int countOpened(){
+        int res=0;
+        for(int i=0;i<fsp;i++){
+            if(r(i)) res++;
+        }
+        return res;
+    }
+    int countOpened(Formule f){
+        int res=0;
+        for(int i=0;i<f.fsp;i++){
+            if(r(f.formuleL[i])) res++;
+            if(r(f.formuleR[i])) res++;
+        }
+        return res;
+    }  
+    
+    int countOpenedAnd(Formule f){
+        int res=0;
+        for(int i=0;i<f.fsp;i++){
+            if(r(f.formuleL[i]) ||r(f.formuleR[i]) ) res++;
+        }
+        return res;
+    }      
+};
+
+
+void reverseIt(unsigned int* o,Formule *f,int nbBits){
+    unsigned int* e = new unsigned int[nbBits/32];
+    unsigned int* bstack = new unsigned int[nbBits/32];
+    int sp=0;
+    
+    Hypmat h;
+    
+    h.reset(nbBits);
+    
+    cout << endl;
+    cout << "reversed";
+    cout << endl;
+    
+    int nbclosed=0;
+    int oldClosed;
+    
+    bool showAll=true;
+    
+    if(showAll==true)
+    for(int halfi=0;halfi<nbBits/2;halfi++){
+            {
+                int ind=halfi;
+
+                int nbop=h.countOpened(f[ind]);
+                int nbopAnd=h.countOpenedAnd(f[ind]);
+                unsigned int getV=x(o,ind);
+                //if(nbop>0 && nbop<=16)
+                {
+
+                    cout << ind << " o "<< getV <<" open "<< nbop <<" openAnd "<< nbopAnd<<endl;
+                }
+            }
+            {
+                int ind=nbBits-halfi-2;
+
+                int nbop=h.countOpened(f[ind]);
+                int nbopAnd=h.countOpenedAnd(f[ind]);
+               // if(nbop>0 && nbop<=16)
+                {
+                    unsigned int getV=x(o,ind);
+                    cout << ind << " o "<< getV <<" open "<< nbop <<" openAnd "<< nbopAnd<<endl;
+                }
+
+            }        
+
+
+
+        }
+    
+    if(showAll==false)
+    do{
+        oldClosed=nbclosed;
+        for(int halfi=0;halfi<nbBits/2;halfi++){
+
+            {
+                int ind=halfi;
+
+                int nbop=h.countOpened(f[ind]);
+                int nbopAnd=h.countOpenedAnd(f[ind]);
+                unsigned int getV=x(o,ind);
+                //if(nbop>0 && nbop<=16)
+                {
+
+                    cout << ind << " o "<< getV <<" open "<< nbop <<" openAnd "<< nbopAnd<<endl;
+                }
+
+                if(getV==1 && nbopAnd==1){
+                    nbclosed+=h.closeSingleAndWithOne(f[ind]);
+                } 
+
+            }
+            {
+                int ind=nbBits-halfi-2;
+
+                int nbop=h.countOpened(f[ind]);
+                int nbopAnd=h.countOpenedAnd(f[ind]);
+                if(nbop>0 && nbop<=16){
+                    unsigned int getV=x(o,ind);
+                    cout << ind << " o "<< getV <<" open "<< nbop <<" openAnd "<< nbopAnd<<endl;
+                }
+
+            }        
+
+
+
+        }
+        cout << "nbClosed "<< nbclosed << endl;
+    }while(nbclosed!=oldClosed);
+    
+}
+
 int funWithFormule(){
   int size;
   
    cout<<"funWithFormule"<<endl;
   string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
+  // string is="32\n 00000001 000073af\n";
   std::istringstream sin(is);
   sin >> size;
  
@@ -75,9 +244,10 @@ int funWithFormule(){
     for(int i = 0; i < size / 16; i++)
       cout << hex << b[i] << " ";       // print result  
   
+    unsigned int nbBit=size*2;
+    reverseIt(b,formule,nbBit);
+  
 }
-
-
 
 int writeFour(unsigned int tab[],int curBitPos){
     int v=x(tab,curBitPos++);
