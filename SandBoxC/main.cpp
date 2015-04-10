@@ -20,17 +20,14 @@ void set(unsigned int tab[],unsigned int numBit,unsigned int v){
 }
 
 struct Formule{
-     vector< unsigned int > formuleL;
-     vector< unsigned int > formuleR;
-     
-   H(){
-       formuleL = vector< unsigned int >();
-       formuleR = vector< unsigned int >();
-  }
+    unsigned int formuleL[512];
+    unsigned int formuleR[512];
+    unsigned int fsp=0;
    
    void add(unsigned int a,unsigned int b){
-       formuleL.push_back(a);
-       formuleR.push_back(b);
+       formuleL[fsp]=a;
+       formuleR[fsp]=b;
+       fsp++;
    }
 };
 
@@ -44,10 +41,10 @@ int funWithFormule(){
  
   unsigned int* a = new unsigned int[size / 16]; // <- input tab to encrypt
   unsigned int* b = new unsigned int[size / 16]; // <- output tab
-  vector< Formule > formule= vector<Formule>(size);
-  //for(int i=0;i<size();i++){
-  //    formule[i]=H
-  //}
+   Formule *formule=new Formule[size*2];
+  for(int i=0;i<size* 2;i++){
+      formule[i].fsp=0;
+  }
   cout<<"funWithFormule begin read"<<endl;
    
     for (int i = 0; i < size / 16; i++) {   // Read size / 16 integers to a
@@ -65,12 +62,12 @@ int funWithFormule(){
     }
   cout<<"funWithFormule apply formulaes"<<endl;
     for(int i=0;i<size*2;i++){
-        cout<<i<<endl;
+        //cout<<i<<endl;
         unsigned int xo=0;
-        //for(int k=0;i<formule[i].formuleL.size();k++){
-            //unsigned int v= x(a,formule[i].formuleL[k]) & x(a,formule[i].formuleR[k]);
-            //xo^=v;
-        //}
+        for(int k=0;k<formule[i].fsp;k++){
+            unsigned int v= x(a,formule[i].formuleL[k]) & x(a,formule[i].formuleR[k]);
+            xo^=v;
+        }
 
         set(b,i, xo  );
     }
