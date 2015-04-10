@@ -1,6 +1,7 @@
 
 #include <iostream>
-#include <sstream>
+#include <vector>
+#include <sstream> //this is where istringstream is defined
 
 using namespace std;
 
@@ -17,6 +18,69 @@ void set(unsigned int tab[],unsigned int numBit,unsigned int v){
     o=o&~m;
     tab[numBit / 32] = o | t;
 }
+
+struct Formule{
+     vector< unsigned int > formuleL;
+     vector< unsigned int > formuleR;
+     
+   H(){
+       formuleL = vector< unsigned int >();
+       formuleR = vector< unsigned int >();
+  }
+   
+   void add(unsigned int a,unsigned int b){
+       formuleL.push_back(a);
+       formuleR.push_back(b);
+   }
+};
+
+int funWithFormule(){
+  int size;
+  
+   cout<<"funWithFormule"<<endl;
+  string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
+  std::istringstream sin(is);
+  sin >> size;
+ 
+  unsigned int* a = new unsigned int[size / 16]; // <- input tab to encrypt
+  unsigned int* b = new unsigned int[size / 16]; // <- output tab
+  vector< Formule > formule= vector<Formule>(size);
+  //for(int i=0;i<size();i++){
+  //    formule[i]=H
+  //}
+  cout<<"funWithFormule begin read"<<endl;
+   
+    for (int i = 0; i < size / 16; i++) {   // Read size / 16 integers to a
+      sin >> hex >> a[i];
+    }
+
+    for (int i = 0; i < size / 16; i++) {   // Write size / 16 zeros to b
+      b[i] = 0;
+    }	  
+    for (int i = 0; i < size; i++)
+    for (int j = 0; j < size; j++){
+        formule[i+j].add(i,j+size);
+        
+        //set(b,i+j, x(b,i+j)^(x(a,i)&x(a,j+size)));
+    }
+  cout<<"funWithFormule apply formulaes"<<endl;
+    for(int i=0;i<size*2;i++){
+        cout<<i<<endl;
+        unsigned int xo=0;
+        //for(int k=0;i<formule[i].formuleL.size();k++){
+            //unsigned int v= x(a,formule[i].formuleL[k]) & x(a,formule[i].formuleR[k]);
+            //xo^=v;
+        //}
+
+        set(b,i, xo  );
+    }
+
+    for(int i = 0; i < size / 16; i++)
+      cout << hex << b[i] << " ";       // print result  
+  
+}
+
+
 
 int writeFour(unsigned int tab[],int curBitPos){
     int v=x(tab,curBitPos++);
@@ -183,6 +247,7 @@ int main()
     //tstSetGet();
     autoRef();cout<<endl;
     funRefWithBits();cout<<endl;
+    funWithFormule();cout<<endl;
     return(0);
     //return funRef();
 }
