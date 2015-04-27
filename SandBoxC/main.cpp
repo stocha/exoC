@@ -7,12 +7,11 @@
 
 using namespace std;
 
-
-int x(unsigned int tab[],int numBit){
+int bitAt(unsigned int tab[],int numBit){
     return ((tab[numBit / 32] >> (numBit % 32))&1);
 }
 
-void set(unsigned int tab[],unsigned int numBit,unsigned int v){
+void setAt(unsigned int tab[],unsigned int numBit,unsigned int v){
     unsigned int t=(unsigned int)v<<(numBit%32);
     unsigned int m=(unsigned int)1<<(numBit%32);
     
@@ -21,6 +20,26 @@ void set(unsigned int tab[],unsigned int numBit,unsigned int v){
     tab[numBit / 32] = o | t;
 }
 
+/* 512 bits hypothetiques */
+struct hyp{
+    unsigned int v[512/32];
+    int nbBits;
+    
+    void out(){
+           for(int i = 0; i < nbBits / 32; i++)
+            cout << hex << v[i] << " ";       // print result  
+           
+           cout <<endl;
+    }
+};
+
+/* Multiples hypotheses */
+struct hypStack{
+    hyp h[512];
+    unsigned int cp=0;
+};
+
+// Couple de ET connecte par des XOR
 struct Formule{
     unsigned int formuleL[512];
     unsigned int formuleR[512];
@@ -32,6 +51,76 @@ struct Formule{
        fsp++;
    }
 };
+
+Formule *buildFormule(int nbBits){
+    Formule *formule=new Formule[nbBits];
+    for (int i = 0; i < nbBits/2; i++)
+    for (int j = 0; j < nbBits/2; j++){
+        formule[i+j].add(i,j+nbBits/2);
+        
+        //set(b,i+j, x(b,i+j)^(x(a,i)&x(a,j+size)));
+    }
+
+    return formule;
+}
+
+hyp* fromString(string is){
+    
+      int size;
+      std::istringstream sin(is);
+  sin >> size;
+ 
+  unsigned int* a = new unsigned int[size / 16]; // <- input tab to encrypt
+  
+  hyp* res=new hyp;
+  res->nbBits=size*2;
+  
+   
+    for (int i = 0; i < size / 16; i++) {   // Read size / 16 integers to a
+      sin >> hex >> res->v[i];
+    }
+
+  return res;
+  
+}
+
+
+void tst001(){
+      string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
+      hyp *in=fromString(is);
+      in->out();
+}
+
+int main()
+{
+    cout << "Main start" <<endl;
+    //tstSetGet();
+    //autoRef();cout<<endl;
+    //funRefWithBits();cout<<endl;
+   // funWithFormule();cout<<endl;
+    tst001();
+    
+    cout << "++++ Main end ++++"<<endl;
+    return(0);
+    //return funRef();
+}
+
+//--------------------------------------------------------------------
+
+int x(unsigned int tab[],int numBit){
+    return ((tab[numBit / 32] >> (numBit % 32))&1);
+}
+
+
+void set(unsigned int tab[],unsigned int numBit,unsigned int v){
+    unsigned int t=(unsigned int)v<<(numBit%32);
+    unsigned int m=(unsigned int)1<<(numBit%32);
+    
+    unsigned int o=(tab[numBit / 32]);
+    o=o&~m;
+    tab[numBit / 32] = o | t;
+}
+
 
 struct Hypmat{
     unsigned int bit[512];
@@ -106,6 +195,10 @@ struct Hypmat{
         return res;
     }      
 };
+
+void reverseIt2(unsigned int* o,Formule *f,int nbBits){
+    
+}
 
 
 void reverseIt(unsigned int* o,Formule *f,int nbBits){
@@ -245,7 +338,7 @@ int funWithFormule(){
       cout << hex << b[i] << " ";       // print result  
   
     unsigned int nbBit=size*2;
-    reverseIt(b,formule,nbBit);
+    reverseIt2(b,formule,nbBit);
   
 }
 
@@ -409,12 +502,3 @@ int autoRef(){
   return 0;    
 }
 
-int main()
-{
-    //tstSetGet();
-    autoRef();cout<<endl;
-    funRefWithBits();cout<<endl;
-    funWithFormule();cout<<endl;
-    return(0);
-    //return funRef();
-}
