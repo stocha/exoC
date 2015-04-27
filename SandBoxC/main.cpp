@@ -7,19 +7,6 @@
 
 using namespace std;
 
-int bitAt(unsigned int tab[],int numBit){
-    return ((tab[numBit / 32] >> (numBit % 32))&1);
-}
-
-void setAt(unsigned int tab[],unsigned int numBit,unsigned int v){
-    unsigned int t=(unsigned int)v<<(numBit%32);
-    unsigned int m=(unsigned int)1<<(numBit%32);
-    
-    unsigned int o=(tab[numBit / 32]);
-    o=o&~m;
-    tab[numBit / 32] = o | t;
-}
-
 /* 512 bits hypothetiques */
 struct hyp{
     unsigned int v[512/32];
@@ -31,6 +18,30 @@ struct hyp{
            
            cout <<endl;
     }
+    
+    hyp *clone(){
+        hyp *res=new hyp;
+          res->nbBits=nbBits;
+          for(int i = 0; i < nbBits ; i++){
+              res->setAt(i,bitAt(i));
+          }
+          
+          
+          return res;
+    }
+    
+    int bitAt(int numBit){
+        return ((v[numBit / 32] >> (numBit % 32))&1);
+    }
+
+    void setAt(unsigned int numBit,unsigned int k){
+        unsigned int t=(unsigned int)k<<(numBit%32);
+        unsigned int m=(unsigned int)1<<(numBit%32);
+
+        unsigned int o=(v[numBit / 32]);
+        o=o&~m;
+        v[numBit / 32] = o | t;
+    }    
 };
 
 /* Multiples hypotheses */
@@ -69,8 +80,6 @@ hyp* fromString(string is){
       int size;
       std::istringstream sin(is);
   sin >> size;
- 
-  unsigned int* a = new unsigned int[size / 16]; // <- input tab to encrypt
   
   hyp* res=new hyp;
   res->nbBits=size*2;
@@ -89,6 +98,9 @@ void tst001(){
       string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
       hyp *in=fromString(is);
       in->out();
+      
+      hyp *cl=in->clone();
+      cl->out();
 }
 
 int main()
