@@ -7,10 +7,29 @@
 
 using namespace std;
 
+
+// Couple de ET connecte par des XOR
+struct Formule{
+    unsigned int formuleL[512];
+    unsigned int formuleR[512];
+    unsigned int fsp=0;
+   
+   void add(unsigned int a,unsigned int b){
+       formuleL[fsp]=a;
+       formuleR[fsp]=b;
+       fsp++;
+   }
+};
+
 /* 512 bits hypothetiques */
 struct hyp{
     unsigned int v[512/32];
     int nbBits;
+    
+    void clr(){
+        for(int i = 0; i < 512 / 32; i++)
+            v[i]=0;
+    }
     
     void out(){
            for(int i = 0; i < nbBits / 32; i++)
@@ -42,25 +61,69 @@ struct hyp{
         o=o&~m;
         v[numBit / 32] = o | t;
     }    
+    
+    void copy(hyp *src){
+          nbBits=src->nbBits;
+          for(int i = 0; i < nbBits ; i++){
+              setAt(i,src->bitAt(i));
+          }        
+    }
 };
 
 /* Multiples hypotheses */
 struct hypStack{
     hyp h[512];
     unsigned int cp=0;
-};
-
-// Couple de ET connecte par des XOR
-struct Formule{
-    unsigned int formuleL[512];
-    unsigned int formuleR[512];
-    unsigned int fsp=0;
-   
-   void add(unsigned int a,unsigned int b){
-       formuleL[fsp]=a;
-       formuleR[fsp]=b;
-       fsp++;
-   }
+    
+    hyp addedBit;
+    
+    int nbBit=512;
+    
+    void setNbBit(int nb){
+        nbBit=nb;
+    }
+    
+    void addBit(unsigned int index){
+        // si vide, ajoute deux hypothese 0 partout + 1 sur la deuxieme pour le bit ajoute
+        if (cp==0){
+            addedBit.clr();
+            addedBit.nbBits=nbBit;
+            
+            h[0].clr();
+            h[0].nbBits=nbBit;
+            h[1].copy(&h[0]);
+            h[1].setAt(index,1);
+            cp+=2;
+            addedBit.setAt(index,1);
+            return;
+        }
+        
+        bool exist=addedBit.bitAt(index)==1;
+    
+        // ajoute le bit dans addedBit s'il n'existe pas
+        // si ajout du bit, alors duplication des hypotheses avec bit à 0 en haut, et bit à 1 en bas
+        if(!exist){
+            h[cp].copy(&h[cp-1]);
+            h[cp+1].copy(&h[cp-1]);
+            h[cp+1].setAt(index,1);
+            cp+=2;
+            addedBit.setAt(index,1);
+        }
+    }
+    
+    void out(){
+        cout << "nb Hypotheses " << cp << " bit set mask" << endl;
+        addedBit.out();
+        cout << "---------------" << endl;
+        for(int i=0;i<cp;i++){
+            h[i].out();
+        }
+    }
+    
+    void checkConstraint(Formule *form,unsigned int expectedVal){
+        //Marque les formule qui ne correspondent pas a la contrainte
+    }
+    
 };
 
 Formule *buildFormule(int nbBits){
@@ -101,6 +164,12 @@ void tst001(){
       
       hyp *cl=in->clone();
       cl->out();
+      
+      hypStack hh;
+      hh.addBit(3);
+      hh.out();
+      hh.addBit(6);
+      hh.out();
 }
 
 int main()
