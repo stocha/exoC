@@ -49,7 +49,7 @@ struct hyp{
           return res;
     }
     
-    int bitAt(int numBit){
+    unsigned int bitAt(int numBit){
         return ((v[numBit / 32] >> (numBit % 32))&1);
     }
 
@@ -67,6 +67,15 @@ struct hyp{
           for(int i = 0; i < nbBits ; i++){
               setAt(i,src->bitAt(i));
           }        
+    }
+    
+    unsigned int test(Formule *f){
+        unsigned int r=0;
+        for(int i=0;i<f->fsp;i++){
+            int a=f->formuleL[i];
+            int b=f->formuleR[i];
+            r^=(bitAt(a)&bitAt(b));
+        }
     }
 };
 
@@ -121,7 +130,12 @@ struct hypStack{
     }
     
     void checkConstraint(Formule *form,unsigned int expectedVal){
-        //Marque les formule qui ne correspondent pas a la contrainte
+        //Marque les hypotheses qui ne correspondent pas a la contrainte
+        bool b[512];
+        for(int i=0;i<cp;i++){
+            unsigned int appF=h[i].test(form);
+            b[i]=(appF==expectedVal);
+        }
     }
     
 };
