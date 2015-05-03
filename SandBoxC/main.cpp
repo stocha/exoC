@@ -87,9 +87,13 @@ struct hyp{
     }
 };
 
+const int stackSize=812000;
+
 /* Multiples hypotheses */
 struct hypStack{
-    hyp h[512];
+    
+    
+    hyp h[stackSize];
     unsigned int cp=0;
     
     hyp addedBit;
@@ -115,15 +119,19 @@ struct hypStack{
             return;
         }
         
+        if(cp>= stackSize/2) {cout << "!!!!!!!!!!!!!!! hyp stack too big !!!!!!!!!!!!!!!!!!!!" << endl; int nni=0;int nnj=0; nni=nni/nnj;}
+        
         bool exist=addedBit.bitAt(index)==1;
     
         // ajoute le bit dans addedBit s'il n'existe pas
         // si ajout du bit, alors duplication des hypotheses avec bit à 0 en haut, et bit à 1 en bas
         if(!exist){
-            h[cp].copy(&h[cp-1]);
-            h[cp+1].copy(&h[cp-1]);
-            h[cp+1].setAt(index,1);
-            cp+=2;
+            
+            for(int i=0;i<cp;i++){
+                h[cp+i].copy(&h[i]);
+                h[cp+i].setAt(index,1);
+            }
+            cp+=cp;
             addedBit.setAt(index,1);
         }
     }
@@ -147,6 +155,7 @@ struct hypStack{
     void addFormula(Formule *form,unsigned int expectedVal){
         // ajoute les bits de la formule
         addBitFromFormula(form);
+        cout << "nb Hyp : " << cp << endl;
         
         // Elimine les hypotheses qui ne correspondent pas
         checkConstraint(form,expectedVal);
@@ -154,7 +163,7 @@ struct hypStack{
     
     void checkConstraint(Formule *form,unsigned int expectedVal){
         //Marque les hypotheses qui ne correspondent pas a la contrainte
-        bool b[512];
+        bool b[stackSize];
         int nb=0;
         for(int i=0;i<cp;i++){
             unsigned int appF=h[i].test(form);
@@ -162,7 +171,7 @@ struct hypStack{
             //cout << i << " Out " << expectedVal << " Form " << appF<< endl;
             if(b[i]==false){ 
                 nb++;
-                cout << i << " non fit " << endl;
+                //cout << i << " non fit " << endl;
             
             };
             
@@ -173,7 +182,7 @@ struct hypStack{
         for(int i=0;i<cp;i++){
             while(b[i+decC]==false && (i+decC)<cp){ decC++; }
             if(decC>0 && (i+decC < cp)){
-                cout << i<< " <- " << (i+decC) << endl;
+                //cout << i<< " <- " << (i+decC) << endl;
                 h[i].copy(&h[i+decC]);
             }
         }
@@ -208,9 +217,54 @@ hyp* fromString(string is){
     for (int i = 0; i < size / 16; i++) {   // Read size / 16 integers to a
       sin >> hex >> res->v[i];
     }
+  
+  if(size/16 < 1) sin >> hex >> res->v[0];
 
   return res;
   
+}
+
+void tst003(){
+        
+    string is="32\n 000073af 00000000";
+    string out_theo="00000001 000073af\n"
+       " 00000083 000000e5\n"
+       " 000000e5 00000083\n"
+       " 000073af 00000001\n";
+    
+    hyp *in=fromString(is);
+      in->out();
+      
+      Formule *f = buildFormule(in->nbBits);
+      
+      for(int i=0;i<in->nbBits;i++){
+         // cout << i <<") " << in->bitAt(i) << "<=>";
+         // f[i].out();
+      }
+      hypStack *hh = new hypStack;
+      for(int numForm=0;numForm<in->nbBits/2;numForm++){
+          
+          int i=numForm;
+          cout <<"FORMULE "<< i <<") " << in->bitAt(i) << "<=>";
+          f[i].out();
+          cout  << "-----------------------" << endl;
+
+        // Elimine les hypotheses qui ne correspondent pas
+        hh->addFormula(&f[i],in->bitAt(i));       
+        cout << "+++ remove non fit +++"<<endl;
+          //hh->out();
+          
+          i=(-numForm+in->nbBits)-2;
+          cout <<"FORMULE "<< i <<") " << in->bitAt(i) << "<=>";
+          f[i].out();
+          cout  << "-----------------------" << endl;
+
+        // Elimine les hypotheses qui ne correspondent pas
+        hh->addFormula(&f[i],in->bitAt(i));       
+        cout << "+++ remove non fit +++"<<endl;
+          //hh->out();          
+      }      
+      hh->out();
 }
 
 void tst002(){
@@ -272,7 +326,7 @@ int main()
     //funRefWithBits();cout<<endl;
    // funWithFormule();cout<<endl;
     //tst001();
-    tst002();
+    tst003();
     
     cout << "++++ Main end ++++"<<endl;
     return(0);
