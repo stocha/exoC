@@ -19,6 +19,13 @@ struct Formule{
        formuleR[fsp]=b;
        fsp++;
    }
+   
+    void out(){
+           for(int i = 0; i < fsp; i++)
+            cout << "(" << formuleR[i] << "&" << formuleL[i] << ")^";       // print result  
+           
+           cout <<endl;
+    }   
 };
 
 /* 512 bits hypothetiques */
@@ -76,6 +83,7 @@ struct hyp{
             int b=f->formuleR[i];
             r^=(bitAt(a)&bitAt(b));
         }
+        return r;
     }
 };
 
@@ -129,13 +137,48 @@ struct hypStack{
         }
     }
     
+    void addBitFromFormula(Formule *form){
+        for(int i=0;i<form->fsp;i++){
+            addBit(form->formuleL[i]);
+            addBit(form->formuleR[i]);
+        }
+    }
+    
+    void addFormula(Formule *form,unsigned int expectedVal){
+        // ajoute les bits de la formule
+        addBitFromFormula(form);
+        
+        // Elimine les hypotheses qui ne correspondent pas
+        checkConstraint(form,expectedVal);
+    }
+    
     void checkConstraint(Formule *form,unsigned int expectedVal){
         //Marque les hypotheses qui ne correspondent pas a la contrainte
         bool b[512];
+        int nb=0;
         for(int i=0;i<cp;i++){
             unsigned int appF=h[i].test(form);
             b[i]=(appF==expectedVal);
+            //cout << i << " Out " << expectedVal << " Form " << appF<< endl;
+            if(b[i]==false){ 
+                nb++;
+                cout << i << " non fit " << endl;
+            
+            };
+            
+   
         }
+        
+        int decC=0;
+        for(int i=0;i<cp;i++){
+            while(b[i+decC]==false && (i+decC)<cp){ decC++; }
+            if(decC>0 && (i+decC < cp)){
+                cout << i<< " <- " << (i+decC) << endl;
+                h[i].copy(&h[i+decC]);
+            }
+        }
+        cp-=decC;
+        
     }
     
 };
@@ -170,6 +213,41 @@ hyp* fromString(string is){
   
 }
 
+void tst002(){
+      //string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
+    
+    string is="32\n 000073af 00000000";
+    string out_theo="00000001 000073af\n"
+       " 00000083 000000e5\n"
+       " 000000e5 00000083\n"
+       " 000073af 00000001\n";
+    
+    hyp *in=fromString(is);
+      in->out();
+      
+      Formule *f = buildFormule(in->nbBits);
+      
+      for(int i=0;i<in->nbBits;i++){
+         // cout << i <<") " << in->bitAt(i) << "<=>";
+         // f[i].out();
+      }
+      hypStack hh;
+      for(int i=0;i< 2/*in->nbBits*/;i++){
+          cout <<"FORMULE "<< i <<") " << in->bitAt(i) << "<=>";
+          f[i].out();
+          cout  << "-----------------------" << endl;
+        // ajoute les bits de la formule
+        hh.addBitFromFormula(&f[i]);
+        cout << "+++ Add bits +++";
+                hh.out();
+        
+        // Elimine les hypotheses qui ne correspondent pas
+        hh.checkConstraint(&f[i],in->bitAt(i));       
+        cout << "+++ remove non fit +++";
+          hh.out();
+      }      
+      
+}
 
 void tst001(){
       string is="256\n 320a18d5 b61b13f6 1aaaa61c 0afe2a41 1a4ff107 84cc2efc 956ff31d fa595299 33749a7f 6cc9659d dc503569 ef4d0ef5 73b746c5 b8fb36d3 7616e9d6 b21251c4\n";
@@ -193,7 +271,8 @@ int main()
     //autoRef();cout<<endl;
     //funRefWithBits();cout<<endl;
    // funWithFormule();cout<<endl;
-    tst001();
+    //tst001();
+    tst002();
     
     cout << "++++ Main end ++++"<<endl;
     return(0);
