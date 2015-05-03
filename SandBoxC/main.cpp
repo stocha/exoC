@@ -87,13 +87,14 @@ struct hyp{
     }
 };
 
-const int stackSize=812000;
+const int stackSize=812000*16;
 
 /* Multiples hypotheses */
 struct hypStack{
     
     
     hyp h[stackSize];
+    bool tst[stackSize];
     unsigned int cp=0;
     
     hyp addedBit;
@@ -155,21 +156,22 @@ struct hypStack{
     void addFormula(Formule *form,unsigned int expectedVal){
         // ajoute les bits de la formule
         addBitFromFormula(form);
-        cout << "nb Hyp : " << cp << endl;
+        cout << "nb Hyp avant application : " << cp << endl;
         
         // Elimine les hypotheses qui ne correspondent pas
         checkConstraint(form,expectedVal);
+        cout << "nb Hyp apres application : " << cp << endl;
     }
     
     void checkConstraint(Formule *form,unsigned int expectedVal){
         //Marque les hypotheses qui ne correspondent pas a la contrainte
-        bool b[stackSize];
+
         int nb=0;
         for(int i=0;i<cp;i++){
             unsigned int appF=h[i].test(form);
-            b[i]=(appF==expectedVal);
+            tst[i]=(appF==expectedVal);
             //cout << i << " Out " << expectedVal << " Form " << appF<< endl;
-            if(b[i]==false){ 
+            if(tst[i]==false){ 
                 nb++;
                 //cout << i << " non fit " << endl;
             
@@ -180,7 +182,7 @@ struct hypStack{
         
         int decC=0;
         for(int i=0;i<cp;i++){
-            while(b[i+decC]==false && (i+decC)<cp){ decC++; }
+            while(tst[i+decC]==false && (i+decC)<cp){ decC++; }
             if(decC>0 && (i+decC < cp)){
                 //cout << i<< " <- " << (i+decC) << endl;
                 h[i].copy(&h[i+decC]);
@@ -226,7 +228,7 @@ hyp* fromString(string is){
 
 void tst003(){
         
-    string is="32\n 000073af 00000000";
+    string is="16\n 000073af 00000000";
     string out_theo="00000001 000073af\n"
        " 00000083 000000e5\n"
        " 000000e5 00000083\n"
